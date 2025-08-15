@@ -36,6 +36,7 @@ import androidx.xr.compose.subspace.SceneCoreEntitySizeAdapter
 import androidx.xr.compose.subspace.layout.SubspaceModifier
 import androidx.xr.compose.subspace.layout.scale
 import androidx.xr.compose.unit.Meter
+import androidx.xr.runtime.Session
 import androidx.xr.scenecore.GltfModel
 import androidx.xr.scenecore.GltfModelEntity
 import com.example.helloandroidxr.R
@@ -100,7 +101,7 @@ private object BugdroidGltfModelCache {
 
     @SuppressLint("RestrictedApi")
     suspend fun getOrLoadModel(
-        xrCoreSession: androidx.xr.runtime.Session, context: Context
+        xrCoreSession: Session, context: Context
     ): GltfModel? {
         return if (cachedModel == null) {
             try {
