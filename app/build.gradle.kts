@@ -23,12 +23,12 @@ plugins {
 
 android {
     namespace = "com.example.helloandroidxr"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.helloandroidxr"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.scenecore)
     implementation(libs.androidx.compose)
     implementation(libs.kotlinx.coroutines.guava)
+    compileOnly(libs.androidx.extensions.xr) //This is necessary for Proguard minification
 
     implementation(libs.material)
     implementation(libs.androidx.compose.material3)

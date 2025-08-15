@@ -59,8 +59,8 @@ import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.WindowWidthSizeClass
 import androidx.xr.compose.platform.LocalSpatialCapabilities
+import androidx.xr.compose.spatial.ContentEdge
 import androidx.xr.compose.spatial.Orbiter
-import androidx.xr.compose.spatial.OrbiterEdge
 import androidx.xr.compose.spatial.Subspace
 import androidx.xr.compose.subspace.SpatialColumn
 import androidx.xr.compose.subspace.SpatialPanel
@@ -71,6 +71,7 @@ import androidx.xr.compose.subspace.layout.fillMaxSize
 import androidx.xr.compose.subspace.layout.fillMaxWidth
 import androidx.xr.compose.subspace.layout.height
 import androidx.xr.compose.subspace.layout.movable
+import androidx.xr.compose.subspace.layout.offset
 import androidx.xr.compose.subspace.layout.padding
 import androidx.xr.compose.subspace.layout.resizable
 import androidx.xr.compose.subspace.layout.size
@@ -260,7 +261,7 @@ private fun TopAppBar() {
     ) {
         Spacer(Modifier.weight(1f))
         Orbiter(
-            position = OrbiterEdge.Top,
+            position = ContentEdge.Top,
             offset = dimensionResource(R.dimen.top_ornament_padding),
             alignment = Alignment.Start
         ) {
@@ -268,7 +269,7 @@ private fun TopAppBar() {
         }
         Spacer(Modifier.weight(1f))
         Orbiter(
-            position = OrbiterEdge.Top,
+            position = ContentEdge.Top,
             offset = dimensionResource(R.dimen.top_ornament_padding),
             alignment = Alignment.End
         ) {
@@ -280,22 +281,28 @@ private fun TopAppBar() {
 @Composable
 private fun PrimaryContent(modifier: Modifier = Modifier) {
     var showBugdroid by rememberSaveable { mutableStateOf(false) }
+    val stringResId = if (showBugdroid) R.string.hide_bugdroid else R.string.show_bugdroid
 
     if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
         Surface(modifier.fillMaxSize()) {
             Box(modifier.padding(48.dp), contentAlignment = Alignment.Center) {
                 Button(
                     onClick = {
-                        showBugdroid = true
+                        showBugdroid = !showBugdroid
                     },
                     modifier = modifier
                 ) {
                     Text(
-                        text = stringResource(id = R.string.show_bugdroid),
+                        text = stringResource(id = stringResId),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
-                BugdroidModel(showBugdroid = showBugdroid)
+                BugdroidModel(
+                    showBugdroid = showBugdroid,
+                    modifier = SubspaceModifier
+                        .fillMaxSize()
+                        .offset(z = 400.dp) // Relative position from the panel
+                )
             }
         }
     } else {

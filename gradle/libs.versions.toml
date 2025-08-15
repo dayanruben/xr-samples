@@ -1,23 +1,25 @@
 [versions]
-androidx-runtime = "1.8.1"
-agp = "8.10.0"
-arcore = "1.0.0-alpha04"
-compose = "1.0.0-alpha04"
-scenecore = "1.0.0-alpha04"
+androidx-runtime = "1.9.0"
+agp = "8.12.0"
+arcore = "1.0.0-alpha06"
+compose = "1.0.0-alpha06"
+extensionsXr = "1.0.0"
+scenecore = "1.0.0-alpha06"
 kotlinxCoroutinesGuava = "1.10.2"
-kotlin = "2.1.21"
-concurrentFuturesKtx = "1.2.0"
+kotlin = "2.2.0"
+concurrentFuturesKtx = "1.3.0"
 activityCompose = "1.10.1"
-composeBom = "2025.05.00"
+composeBom = "2025.08.00"
 material = "1.12.0"
-screenshot = "0.0.1-alpha09"
+screenshot = "0.0.1-alpha11"
 adaptiveAndroid = "1.1.0"
-kotlinAndroid = "2.1.21"
+kotlinAndroid = "2.2.0"
 
 [libraries]
 androidx-arcore = { module = "androidx.xr.arcore:arcore", version.ref = "arcore" }
 androidx-compose = { module = "androidx.xr.compose:compose", version.ref = "compose" }
 androidx-scenecore = { module = "androidx.xr.scenecore:scenecore", version.ref = "scenecore" }
+androidx-extensions-xr = { module = "com.android.extensions.xr:extensions-xr", version.ref = "extensionsXr" }
 kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinxCoroutinesGuava" }
 androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
