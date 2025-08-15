@@ -18,17 +18,16 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.screenshot)
 }
 
 android {
     namespace = "com.example.helloandroidxr"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.helloandroidxr"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -57,7 +56,6 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.4"
     }
-    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 }
 
 dependencies {
@@ -67,6 +65,7 @@ dependencies {
     implementation(libs.androidx.scenecore)
     implementation(libs.androidx.compose)
     implementation(libs.kotlinx.coroutines.guava)
+    compileOnly(libs.androidx.extensions.xr) //This is necessary for Proguard minification
 
     implementation(libs.material)
     implementation(libs.androidx.compose.material3)
@@ -76,6 +75,4 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 
     implementation(libs.androidx.compose.ui.tooling)
-
-    screenshotTestImplementation(libs.androidx.compose.ui.tooling)
 }
