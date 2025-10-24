@@ -43,11 +43,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -59,9 +57,12 @@ import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.WindowWidthSizeClass
 import androidx.xr.compose.platform.LocalSpatialCapabilities
+import androidx.xr.compose.platform.LocalSpatialConfiguration
 import androidx.xr.compose.spatial.ContentEdge
 import androidx.xr.compose.spatial.Orbiter
 import androidx.xr.compose.spatial.Subspace
+import androidx.xr.compose.subspace.MovePolicy
+import androidx.xr.compose.subspace.ResizePolicy
 import androidx.xr.compose.subspace.SpatialColumn
 import androidx.xr.compose.subspace.SpatialPanel
 import androidx.xr.compose.subspace.SpatialRow
@@ -70,34 +71,87 @@ import androidx.xr.compose.subspace.layout.alpha
 import androidx.xr.compose.subspace.layout.fillMaxSize
 import androidx.xr.compose.subspace.layout.fillMaxWidth
 import androidx.xr.compose.subspace.layout.height
-import androidx.xr.compose.subspace.layout.movable
 import androidx.xr.compose.subspace.layout.offset
 import androidx.xr.compose.subspace.layout.padding
-import androidx.xr.compose.subspace.layout.resizable
+import androidx.xr.compose.subspace.layout.rotate
 import androidx.xr.compose.subspace.layout.size
 import androidx.xr.compose.subspace.layout.width
+import androidx.xr.runtime.math.Quaternion
 import com.example.helloandroidxr.R
+import com.example.helloandroidxr.ui.components.BugdroidControls
 import com.example.helloandroidxr.ui.components.BugdroidModel
+import com.example.helloandroidxr.ui.components.BugdroidSliderControls
 import com.example.helloandroidxr.ui.components.EnvironmentControls
 import com.example.helloandroidxr.ui.components.SearchBar
+import com.example.helloandroidxr.ui.components.TextPane
 import com.example.helloandroidxr.ui.theme.HelloAndroidXRTheme
+import com.example.helloandroidxr.viewmodel.BugdroidUiState
+import com.example.helloandroidxr.viewmodel.BugdroidViewModel
+import com.example.helloandroidxr.viewmodel.ModelMaterialColor
+import com.example.helloandroidxr.viewmodel.ModelMaterialProperties
+import com.example.helloandroidxr.viewmodel.ModelOffset
+import com.example.helloandroidxr.viewmodel.ModelRotation
+import com.example.helloandroidxr.viewmodel.SliderGroup
 import kotlinx.coroutines.launch
 
 @Composable
 fun HelloAndroidXRApp() {
+    val viewModel = BugdroidViewModel()
+    val uiState by viewModel.uiState.collectAsState()
     if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
         SpatialLayout(
-            primaryContent = { PrimaryContent() },
-            firstSupportingContent = { BlockOfContentOne() },
-            secondSupportingContent = { BlockOfContentTwo() }
+            primaryContent = {
+                PrimaryContent(
+                    uiState = uiState,
+                    onShowBugdroidToggle = viewModel::updateShowBugdroid,
+                    onAnimateBugdroidToggle = viewModel::updateAnimateBugdroid
+                )
+            },
+            firstSupportingContent = {
+                BlockOfContentOne(
+                    showBugdroid = uiState.showBugdroid,
+                    onSliderGroupSelected = viewModel::updateShownSliderGroup,
+                    onResetModel = viewModel::resetModel
+                )
+            },
+            secondSupportingContent = {
+                BlockOfContentTwo(
+                    uiState = uiState,
+                    showBugdroid = uiState.showBugdroid,
+                    onScaleChange = viewModel::updateScale,
+                    onRotationChange = viewModel::updateRotation,
+                    onOffsetChange = viewModel::updateOffset,
+                    onMaterialColorChange = viewModel::updateMaterialColor,
+                    onMaterialPropertiesChange = viewModel::updateMaterialProperties
+                )
+            }
         )
     } else {
         NonSpatialTwoPaneLayout(
             secondaryPane = {
-                BlockOfContentOne()
-                BlockOfContentTwo()
+                BlockOfContentOne(
+                    modifier = Modifier.height(240.dp),
+                    showBugdroid = uiState.showBugdroid,
+                    onSliderGroupSelected = viewModel::updateShownSliderGroup,
+                    onResetModel = viewModel::resetModel
+                )
+                BlockOfContentTwo(
+                    uiState = uiState,
+                    showBugdroid = uiState.showBugdroid,
+                    onScaleChange = viewModel::updateScale,
+                    onRotationChange = viewModel::updateRotation,
+                    onOffsetChange = viewModel::updateOffset,
+                    onMaterialColorChange = viewModel::updateMaterialColor,
+                    onMaterialPropertiesChange = viewModel::updateMaterialProperties
+                )
             },
-            primaryPane = { PrimaryContent() }
+            primaryPane = {
+                PrimaryContent(
+                    uiState = uiState,
+                    onShowBugdroidToggle = viewModel::updateShowBugdroid,
+                    onAnimateBugdroidToggle = viewModel::updateAnimateBugdroid
+                )
+            }
         )
     }
 }
@@ -127,18 +181,18 @@ private fun SpatialLayout(
                     SubspaceModifier
                         .alpha(animatedAlpha.value)
                         .size(400.dp)
-                        .padding(bottom = 16.dp)
-                        .movable()
-                        .resizable()
+                        .padding(bottom = 16.dp),
+                    dragPolicy = MovePolicy(isEnabled = true),
+                    resizePolicy = ResizePolicy(isEnabled = true)
                 ) {
                     firstSupportingContent()
                 }
                 SpatialPanel(
                     SubspaceModifier
                         .alpha(animatedAlpha.value)
-                        .weight(1f)
-                        .movable()
-                        .resizable()
+                        .weight(1f),
+                    dragPolicy = MovePolicy(isEnabled = true),
+                    resizePolicy = ResizePolicy(isEnabled = true)
                 ) {
                     secondSupportingContent()
                 }
@@ -147,9 +201,9 @@ private fun SpatialLayout(
                 modifier = SubspaceModifier
                     .alpha(animatedAlpha.value)
                     .fillMaxSize()
-                    .padding(left = 16.dp)
-                    .movable()
-                    .resizable()
+                    .padding(left = 16.dp),
+                dragPolicy = MovePolicy(isEnabled = true),
+                resizePolicy = ResizePolicy(isEnabled = true)
             ) {
                 Column {
                     TopAppBar()
@@ -279,29 +333,63 @@ private fun TopAppBar() {
 }
 
 @Composable
-private fun PrimaryContent(modifier: Modifier = Modifier) {
-    var showBugdroid by rememberSaveable { mutableStateOf(false) }
-    val stringResId = if (showBugdroid) R.string.hide_bugdroid else R.string.show_bugdroid
-
+private fun PrimaryContent(
+    uiState: BugdroidUiState,
+    onShowBugdroidToggle: () -> Unit,
+    onAnimateBugdroidToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
+        val showStringResId =
+            if (uiState.showBugdroid) R.string.hide_bugdroid else R.string.show_bugdroid
+        val animateStringResId =
+            if (uiState.animateBugdroid) R.string.stop_animation_bugdroid else R.string.animate_bugdroid
+        val modelTransform = uiState.modelTransform
         Surface(modifier.fillMaxSize()) {
-            Box(modifier.padding(48.dp), contentAlignment = Alignment.Center) {
-                Button(
-                    onClick = {
-                        showBugdroid = !showBugdroid
-                    },
-                    modifier = modifier
-                ) {
-                    Text(
-                        text = stringResource(id = stringResId),
-                        style = MaterialTheme.typography.labelLarge
-                    )
+            Column(modifier.padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(modifier.padding(48.dp), contentAlignment = Alignment.Center) {
+                    Button(
+                        onClick = onShowBugdroidToggle,
+                        modifier = modifier
+                    ) {
+                        Text(
+                            text = stringResource(id = showStringResId),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
+                Box(modifier.padding(48.dp), contentAlignment = Alignment.Center) {
+                    if (uiState.showBugdroid) {
+                        Button(
+                            onClick = onAnimateBugdroidToggle,
+                            modifier = modifier
+                        ) {
+                            Text(
+                                text = stringResource(id = animateStringResId),
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
                 }
                 BugdroidModel(
-                    showBugdroid = showBugdroid,
+                    modelTransform = modelTransform,
+                    showBugdroid = uiState.showBugdroid,
+                    animateBugdroid = uiState.animateBugdroid,
                     modifier = SubspaceModifier
                         .fillMaxSize()
-                        .offset(z = 400.dp) // Relative position from the panel
+                        .rotate(
+                            Quaternion(
+                                x = modelTransform.rotation.x,
+                                y = modelTransform.rotation.y,
+                                z = modelTransform.rotation.z,
+                                w = modelTransform.rotation.w
+                            )
+                        )
+                        .offset(
+                            x = modelTransform.offset.x.dp,
+                            y = modelTransform.offset.y.dp,
+                            z = modelTransform.offset.z.dp // Relative position from the panel
+                        )
                 )
             }
         }
@@ -314,13 +402,51 @@ private fun PrimaryContent(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BlockOfContentOne(modifier: Modifier = Modifier) {
-    TextPane(stringResource(R.string.block_of_content_1), modifier = modifier.height(240.dp))
+private fun BlockOfContentOne(
+    modifier: Modifier = Modifier,
+    showBugdroid: Boolean,
+    onSliderGroupSelected: (SliderGroup) -> Unit,
+    onResetModel: () -> Unit
+) {
+    if (LocalSpatialConfiguration.current.hasXrSpatialFeature && showBugdroid) {
+        BugdroidControls(
+            onSliderGroupSelected = onSliderGroupSelected,
+            onResetModel = {
+                onResetModel()
+                onSliderGroupSelected(SliderGroup.NONE)
+            },
+            modifier = modifier
+        )
+    } else {
+        TextPane(stringResource(R.string.block_of_content_1), modifier = modifier.fillMaxHeight())
+    }
 }
 
 @Composable
-private fun BlockOfContentTwo(modifier: Modifier = Modifier) {
-    TextPane(stringResource(R.string.block_of_content_2), modifier = modifier.fillMaxHeight())
+private fun BlockOfContentTwo(
+    modifier: Modifier = Modifier,
+    uiState: BugdroidUiState,
+    showBugdroid: Boolean,
+    onScaleChange: (Float) -> Unit,
+    onRotationChange: (ModelRotation) -> Unit,
+    onOffsetChange: (ModelOffset) -> Unit,
+    onMaterialColorChange: (ModelMaterialColor) -> Unit,
+    onMaterialPropertiesChange: (ModelMaterialProperties) -> Unit,
+) {
+    if (LocalSpatialConfiguration.current.hasXrSpatialFeature && showBugdroid) {
+        BugdroidSliderControls(
+            visibleSliderGroup = uiState.visibleSliderGroup,
+            modelTransform = uiState.modelTransform,
+            onScaleChange = onScaleChange,
+            onRotationChange = onRotationChange,
+            onOffsetChange = onOffsetChange,
+            onMaterialColorChange = onMaterialColorChange,
+            onMaterialPropertiesChange = onMaterialPropertiesChange,
+            modifier = modifier
+        )
+    } else {
+        TextPane(stringResource(R.string.block_of_content_2), modifier = modifier.fillMaxHeight())
+    }
 }
 
 @Composable

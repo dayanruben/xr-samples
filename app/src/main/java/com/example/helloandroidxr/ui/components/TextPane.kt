@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.helloandroidxr.ui
+package com.example.helloandroidxr.ui.components
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
