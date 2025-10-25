@@ -53,12 +53,16 @@ private object BugdroidGltfModelCache {
     suspend fun getOrLoadModel(
         xrCoreSession: Session?, context: Context
     ): GltfModel? {
+        xrCoreSession ?: run {
+            Log.w(TAG, "Cannot load model, session is null.")
+            return null
+        }
         return if (cachedModel == null) {
             try {
                 val inputStream: InputStream =
                     context.resources.openRawResource(R.raw.bugdroid_animated_wave)
                 cachedModel = GltfModel.create(
-                    xrCoreSession!!, inputStream.readBytes(), "BUGDROID"
+                    xrCoreSession, inputStream.readBytes(), "BUGDROID"
                 )
                 cachedModel
             } catch (e: Exception) {

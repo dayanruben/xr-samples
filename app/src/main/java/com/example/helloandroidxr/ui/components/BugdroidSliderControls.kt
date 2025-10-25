@@ -34,6 +34,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.helloandroidxr.R
 import com.example.helloandroidxr.ui.theme.HelloAndroidXRTheme
+import com.example.helloandroidxr.viewmodel.MAX_MATERIAL_COLOR_VALUE
+import com.example.helloandroidxr.viewmodel.MAX_MATERIAL_PROP_VALUE
+import com.example.helloandroidxr.viewmodel.MAX_OFFSET_VALUE
+import com.example.helloandroidxr.viewmodel.MAX_SCALE_VALUE
+import com.example.helloandroidxr.viewmodel.MAX_W_ROTATION_VALUE
+import com.example.helloandroidxr.viewmodel.MAX_X_ROTATION_VALUE
+import com.example.helloandroidxr.viewmodel.MAX_Y_ROTATION_VALUE
+import com.example.helloandroidxr.viewmodel.MAX_Z_ROTATION_VALUE
+import com.example.helloandroidxr.viewmodel.MIN_MATERIAL_COLOR_VALUE
+import com.example.helloandroidxr.viewmodel.MIN_MATERIAL_PROP_VALUE
+import com.example.helloandroidxr.viewmodel.MIN_OFFSET_VALUE
+import com.example.helloandroidxr.viewmodel.MIN_SCALE_VALUE
+import com.example.helloandroidxr.viewmodel.MIN_W_ROTATION_VALUE
+import com.example.helloandroidxr.viewmodel.MIN_X_ROTATION_VALUE
+import com.example.helloandroidxr.viewmodel.MIN_Y_ROTATION_VALUE
+import com.example.helloandroidxr.viewmodel.MIN_Z_ROTATION_VALUE
 import com.example.helloandroidxr.viewmodel.ModelMaterialColor
 import com.example.helloandroidxr.viewmodel.ModelMaterialProperties
 import com.example.helloandroidxr.viewmodel.ModelOffset
@@ -120,7 +136,7 @@ fun ScaleSlider(
     Slider(
         value = scale,
         onValueChange = onScaleChange,
-        valueRange = .1f..5f,
+        valueRange = MIN_SCALE_VALUE..MAX_SCALE_VALUE,
         modifier = Modifier.padding()
     )
     Text(text = "%.2f".format(scale))
@@ -147,7 +163,7 @@ fun RotationSliders(
             Slider(
                 value = rotation.x,
                 onValueChange = { newX -> onRotationChange(rotation.copy(x = newX)) },
-                valueRange = -15f..15f,
+                valueRange = MIN_X_ROTATION_VALUE..MAX_X_ROTATION_VALUE,
                 modifier = Modifier.weight(.7f)
             )
             Text(
@@ -162,7 +178,7 @@ fun RotationSliders(
             Slider(
                 value = rotation.y,
                 onValueChange = { newY -> onRotationChange(rotation.copy(y = newY)) },
-                valueRange = -15f..15f,
+                valueRange = MIN_Y_ROTATION_VALUE..MAX_Y_ROTATION_VALUE,
                 modifier = Modifier.weight(.7f)
             )
             Text(text = "%.2f".format(rotation.y))
@@ -176,7 +192,7 @@ fun RotationSliders(
             Slider(
                 value = rotation.z,
                 onValueChange = { newZ -> onRotationChange(rotation.copy(z = newZ)) },
-                valueRange = -50f..50f,
+                valueRange = MIN_Z_ROTATION_VALUE..MAX_Z_ROTATION_VALUE,
                 modifier = Modifier.weight(.7f)
             )
             Spacer(modifier = Modifier.padding(10.dp))
@@ -191,7 +207,7 @@ fun RotationSliders(
             Slider(
                 value = rotation.w,
                 onValueChange = { newW -> onRotationChange(rotation.copy(w = newW)) },
-                valueRange = -5f..5f,
+                valueRange = MIN_W_ROTATION_VALUE..MAX_W_ROTATION_VALUE,
                 modifier = Modifier.weight(.7f)
             )
             Spacer(modifier = Modifier.padding(10.dp))
@@ -217,7 +233,7 @@ fun OffsetSliders(
         Slider(
             value = offset.x,
             onValueChange = { newX -> onOffsetChange(offset.copy(x = newX)) },
-            valueRange = -1500f..1500f,
+            valueRange = MIN_OFFSET_VALUE..MAX_OFFSET_VALUE,
             modifier = Modifier.padding()
         )
         Text(text = "%.2f".format(offset.x))
@@ -226,7 +242,7 @@ fun OffsetSliders(
         Slider(
             value = offset.y,
             onValueChange = { newY -> onOffsetChange(offset.copy(y = newY)) },
-            valueRange = -1500f..1500f,
+            valueRange = MIN_OFFSET_VALUE..MAX_OFFSET_VALUE,
             modifier = Modifier.padding()
         )
         Text(text = "%.2f".format(offset.y))
@@ -235,7 +251,7 @@ fun OffsetSliders(
         Slider(
             value = offset.z,
             onValueChange = { newZ -> onOffsetChange(offset.copy(z = newZ)) },
-            valueRange = -1500f..1500f,
+            valueRange = MIN_OFFSET_VALUE..MAX_OFFSET_VALUE,
             modifier = Modifier.padding()
         )
         Text(text = "%.2f".format(offset.z))
@@ -259,7 +275,7 @@ fun MaterialColorSliders(
         Slider(
             value = materialColor.x,
             onValueChange = { newX -> onMaterialColorChange(materialColor.copy(x = newX)) },
-            valueRange = 0f..1f,
+            valueRange = MIN_MATERIAL_COLOR_VALUE..MAX_MATERIAL_COLOR_VALUE,
             modifier = Modifier.padding()
         )
         Text(text = "%.2f".format(materialColor.x))
@@ -268,7 +284,7 @@ fun MaterialColorSliders(
         Slider(
             value = materialColor.y,
             onValueChange = { newY -> onMaterialColorChange(materialColor.copy(y = newY)) },
-            valueRange = 0f..1f,
+            valueRange = MIN_MATERIAL_COLOR_VALUE..MAX_MATERIAL_COLOR_VALUE,
             modifier = Modifier.padding()
         )
         Text(text = "%.2f".format(materialColor.y))
@@ -277,7 +293,7 @@ fun MaterialColorSliders(
         Slider(
             value = materialColor.z,
             onValueChange = { newZ -> onMaterialColorChange(materialColor.copy(z = newZ)) },
-            valueRange = 0f..1f,
+            valueRange = MIN_MATERIAL_COLOR_VALUE..MAX_MATERIAL_COLOR_VALUE,
             modifier = Modifier.padding()
         )
         Text(text = "%.2f".format(materialColor.z))
@@ -307,7 +323,7 @@ fun MaterialPropertySliders(
                     )
                 )
             },
-            valueRange = 0f..1f,
+            valueRange = MIN_MATERIAL_PROP_VALUE..MAX_MATERIAL_PROP_VALUE,
             modifier = Modifier.padding()
         )
         Text(text = "%.2f".format(materialProperties.ambientOcclusion))
@@ -322,7 +338,7 @@ fun MaterialPropertySliders(
                     )
                 )
             },
-            valueRange = 0f..1f,
+            valueRange = MIN_MATERIAL_PROP_VALUE..MAX_MATERIAL_PROP_VALUE,
             modifier = Modifier.padding()
         )
         Text(text = "%.2f".format(materialProperties.metallic))
@@ -337,7 +353,7 @@ fun MaterialPropertySliders(
                     )
                 )
             },
-            valueRange = 0f..1f,
+            valueRange = MIN_MATERIAL_PROP_VALUE..MAX_MATERIAL_PROP_VALUE,
             modifier = Modifier.padding()
         )
         Text(text = "%.2f".format(materialProperties.roughness))

@@ -37,8 +37,22 @@ private const val DEFAULT_W_MATERIAL_COLOR = 0.0f
 private const val DEFAULT_AMBIENT_OCCLUSION = 0.5f
 private const val DEFAULT_METALLIC = 0.0f
 private const val DEFAULT_ROUGHNESS = 0.0f
-private const val MIN_COERCE_VALUE = -1500.0f
-private const val MAX_COERCE_VALUE = 1500.0f
+const val MIN_SCALE_VALUE = 0.1f
+const val MAX_SCALE_VALUE = 5.0f
+const val MIN_X_ROTATION_VALUE = -15.0f
+const val MAX_X_ROTATION_VALUE = 15.0f
+const val MIN_Y_ROTATION_VALUE = -15.0f
+const val MAX_Y_ROTATION_VALUE = 15.0f
+const val MIN_Z_ROTATION_VALUE = -50.0f
+const val MAX_Z_ROTATION_VALUE = 50.0f
+const val MIN_W_ROTATION_VALUE = -5.0f
+const val MAX_W_ROTATION_VALUE = 5.0f
+const val MIN_OFFSET_VALUE = -1500.0f
+const val MAX_OFFSET_VALUE = 1500.0f
+const val MIN_MATERIAL_COLOR_VALUE = 0.0f
+const val MAX_MATERIAL_COLOR_VALUE = 1.0f
+const val MIN_MATERIAL_PROP_VALUE = 0.0f
+const val MAX_MATERIAL_PROP_VALUE = 1.0f
 
 // Represents the rotation values for the 3D model
 data class ModelRotation(
@@ -122,7 +136,7 @@ class BugdroidViewModel : ViewModel() {
         _uiState.update { currentState ->
             currentState.copy(
                 modelTransform = currentState.modelTransform.copy(
-                    scale = newScale.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE)
+                    scale = newScale.coerceIn(MIN_SCALE_VALUE, MAX_SCALE_VALUE)
                 )
             )
         }
@@ -133,10 +147,10 @@ class BugdroidViewModel : ViewModel() {
             currentState.copy(
                 modelTransform = currentState.modelTransform.copy(
                     rotation = newRotation.copy(
-                        x = newRotation.x.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE),
-                        y = newRotation.y.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE),
-                        z = newRotation.z.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE),
-                        w = newRotation.w.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE)
+                        x = newRotation.x.coerceIn(MIN_X_ROTATION_VALUE, MAX_X_ROTATION_VALUE),
+                        y = newRotation.y.coerceIn(MIN_Y_ROTATION_VALUE, MAX_Y_ROTATION_VALUE),
+                        z = newRotation.z.coerceIn(MIN_Z_ROTATION_VALUE, MAX_Z_ROTATION_VALUE),
+                        w = newRotation.w.coerceIn(MIN_X_ROTATION_VALUE, MAX_W_ROTATION_VALUE)
                     )
                 )
             )
@@ -148,9 +162,9 @@ class BugdroidViewModel : ViewModel() {
             currentState.copy(
                 modelTransform = currentState.modelTransform.copy(
                     offset = currentState.modelTransform.offset.copy(
-                        x = newOffset.x.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE),
-                        y = newOffset.y.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE),
-                        z = newOffset.z.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE)
+                        x = newOffset.x.coerceIn(MIN_OFFSET_VALUE, MAX_OFFSET_VALUE),
+                        y = newOffset.y.coerceIn(MIN_OFFSET_VALUE, MAX_OFFSET_VALUE),
+                        z = newOffset.z.coerceIn(MIN_OFFSET_VALUE, MAX_OFFSET_VALUE),
                     )
                 )
             )
@@ -162,10 +176,10 @@ class BugdroidViewModel : ViewModel() {
             currentState.copy(
                 modelTransform = currentState.modelTransform.copy(
                     materialColor = currentState.modelTransform.materialColor.copy(
-                        x = newMaterialColor.x.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE),
-                        y = newMaterialColor.y.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE),
-                        z = newMaterialColor.z.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE),
-                        w = newMaterialColor.w.coerceIn(MIN_COERCE_VALUE, MAX_COERCE_VALUE)
+                        x = newMaterialColor.x.coerceIn(MIN_MATERIAL_COLOR_VALUE, MAX_MATERIAL_COLOR_VALUE),
+                        y = newMaterialColor.y.coerceIn(MIN_MATERIAL_COLOR_VALUE, MAX_MATERIAL_COLOR_VALUE),
+                        z = newMaterialColor.z.coerceIn(MIN_MATERIAL_COLOR_VALUE, MAX_MATERIAL_COLOR_VALUE),
+                        w = newMaterialColor.w.coerceIn(MIN_MATERIAL_COLOR_VALUE, MAX_MATERIAL_COLOR_VALUE),
                     )
                 )
             )
@@ -178,16 +192,16 @@ class BugdroidViewModel : ViewModel() {
                 modelTransform = currentState.modelTransform.copy(
                     materialProperties = currentState.modelTransform.materialProperties.copy(
                         ambientOcclusion = newMaterialProperties.ambientOcclusion.coerceIn(
-                            MIN_COERCE_VALUE,
-                            MAX_COERCE_VALUE
+                            MIN_MATERIAL_PROP_VALUE,
+                            MAX_MATERIAL_PROP_VALUE
                         ),
                         metallic = newMaterialProperties.metallic.coerceIn(
-                            MIN_COERCE_VALUE,
-                            MAX_COERCE_VALUE
+                            MIN_MATERIAL_PROP_VALUE,
+                            MAX_MATERIAL_PROP_VALUE
                         ),
                         roughness = newMaterialProperties.roughness.coerceIn(
-                            MIN_COERCE_VALUE,
-                            MAX_COERCE_VALUE
+                            MIN_MATERIAL_PROP_VALUE,
+                            MAX_MATERIAL_PROP_VALUE
                         ),
                     )
                 )
