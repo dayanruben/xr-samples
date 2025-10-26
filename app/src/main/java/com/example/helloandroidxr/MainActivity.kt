@@ -24,7 +24,6 @@ import com.example.helloandroidxr.ui.HelloAndroidXRApp
 import com.example.helloandroidxr.ui.theme.HelloAndroidXRTheme
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
