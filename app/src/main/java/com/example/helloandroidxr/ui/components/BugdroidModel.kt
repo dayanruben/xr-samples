@@ -29,18 +29,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.xr.compose.platform.LocalSession
-import androidx.xr.compose.spatial.Subspace
+import androidx.xr.compose.spatial.PlanarEmbeddedSubspace
 import androidx.xr.compose.subspace.SceneCoreEntity
 import androidx.xr.compose.subspace.SceneCoreEntitySizeAdapter
 import androidx.xr.compose.subspace.layout.SubspaceModifier
 import androidx.xr.compose.subspace.layout.scale
 import androidx.xr.compose.unit.Meter
 import androidx.xr.runtime.math.Vector4
+import androidx.xr.scenecore.AlphaMode
 import androidx.xr.scenecore.GltfModelEntity
 import androidx.xr.scenecore.KhronosPbrMaterial
-import androidx.xr.scenecore.KhronosPbrMaterialSpec
+import androidx.xr.scenecore.Texture
 import com.example.helloandroidxr.bugdroid.BugdroidController
 import com.example.helloandroidxr.viewmodel.ModelTransform
+import kotlin.io.path.Path
 
 // Bugdroid glb height in meters
 private const val bugdroidHeight = 2.08f
@@ -67,41 +69,52 @@ fun BugdroidModel(
         }
         val gltfModel = bugdroidController.gltfModel
         gltfModel?.let { model ->
-            Subspace {
+            PlanarEmbeddedSubspace {
                 val density = LocalDensity.current
                 var scaleFromLayout by remember { mutableFloatStateOf(1f) }
                 var pbrMaterial by remember { mutableStateOf<KhronosPbrMaterial?>(null) }
                 LaunchedEffect(xrSession) {
                     try {
-                        val spec =
-                            KhronosPbrMaterialSpec.create(
-                                lightingModel = KhronosPbrMaterialSpec.LightingModel.LIT,
-                                blendMode = KhronosPbrMaterialSpec.BlendMode.OPAQUE,
-                                doubleSidedMode = KhronosPbrMaterialSpec.DoubleSidedMode.SINGLE_SIDED,
+                        pbrMaterial = KhronosPbrMaterial.create(
+                            session = xrSession,
+                            alphaMode = AlphaMode.OPAQUE
+                        )
+                        val texture = Texture.create(
+                            session = xrSession,
+                            path = Path("white.png") // Used as a base texture for material properties.
+                        )
+                        pbrMaterial?.setOcclusionTexture(
+                            texture = texture,
+                            strength = modelTransform.materialProperties.ambientOcclusion
+                        )
+                        pbrMaterial?.setBaseColorFactor(
+                            Vector4(
+                                x = modelTransform.materialColor.x,
+                                y = modelTransform.materialColor.y,
+                                z = modelTransform.materialColor.z,
+                                w = modelTransform.materialColor.w
                             )
-                        pbrMaterial = KhronosPbrMaterial.create(xrSession, spec)
+                        )
                     } catch (e: Exception) {
                         Log.e(TAG, "Error creating material", e)
                     }
                 }
                 LaunchedEffect(
-                    pbrMaterial,
                     modelTransform.materialColor.x,
                     modelTransform.materialColor.y,
                     modelTransform.materialColor.z,
                     modelTransform.materialColor.w,
-                    modelTransform.materialProperties.ambientOcclusion,
                     modelTransform.materialProperties.metallic,
                     modelTransform.materialProperties.roughness,
                 ) {
-                    pbrMaterial?.setBaseColorFactors(
+                    pbrMaterial?.setBaseColorFactor(
                         Vector4(
                             x = modelTransform.materialColor.x,
                             y = modelTransform.materialColor.y,
                             z = modelTransform.materialColor.z,
+                            w = modelTransform.materialColor.w
                         )
                     )
-                    pbrMaterial?.setAmbientOcclusionFactor(modelTransform.materialProperties.ambientOcclusion)
                     pbrMaterial?.setMetallicFactor(modelTransform.materialProperties.metallic)
                     pbrMaterial?.setRoughnessFactor(modelTransform.materialProperties.roughness)
                 }

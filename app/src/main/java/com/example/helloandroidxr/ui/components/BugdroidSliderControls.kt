@@ -313,21 +313,6 @@ fun MaterialPropertySliders(
         Text(text = stringResource(R.string.change_material_factors))
         Spacer(modifier = Modifier.padding(10.dp))
 
-        Text(text = stringResource(R.string.ambient))
-        Slider(
-            value = materialProperties.ambientOcclusion,
-            onValueChange = { newAmbientOcclusion ->
-                onMaterialPropertiesChange(
-                    materialProperties.copy(
-                        ambientOcclusion = newAmbientOcclusion
-                    )
-                )
-            },
-            valueRange = MIN_MATERIAL_PROP_VALUE..MAX_MATERIAL_PROP_VALUE,
-            modifier = Modifier.padding()
-        )
-        Text(text = "%.2f".format(materialProperties.ambientOcclusion))
-
         Text(text = stringResource(R.string.metallic))
         Slider(
             value = materialProperties.metallic,
