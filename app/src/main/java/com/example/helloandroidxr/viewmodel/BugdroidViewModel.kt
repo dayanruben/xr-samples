@@ -34,7 +34,7 @@ private const val DEFAULT_X_MATERIAL_COLOR = 0.0f
 private const val DEFAULT_Y_MATERIAL_COLOR = 1.0f
 private const val DEFAULT_Z_MATERIAL_COLOR = 0.0f
 private const val DEFAULT_W_MATERIAL_COLOR = 0.0f
-private const val DEFAULT_AMBIENT_OCCLUSION = 0.5f
+private const val DEFAULT_AMBIENT_OCCLUSION = 1.0f
 private const val DEFAULT_METALLIC = 0.0f
 private const val DEFAULT_ROUGHNESS = 0.0f
 const val MIN_SCALE_VALUE = 0.1f
@@ -176,10 +176,22 @@ class BugdroidViewModel : ViewModel() {
             currentState.copy(
                 modelTransform = currentState.modelTransform.copy(
                     materialColor = currentState.modelTransform.materialColor.copy(
-                        x = newMaterialColor.x.coerceIn(MIN_MATERIAL_COLOR_VALUE, MAX_MATERIAL_COLOR_VALUE),
-                        y = newMaterialColor.y.coerceIn(MIN_MATERIAL_COLOR_VALUE, MAX_MATERIAL_COLOR_VALUE),
-                        z = newMaterialColor.z.coerceIn(MIN_MATERIAL_COLOR_VALUE, MAX_MATERIAL_COLOR_VALUE),
-                        w = newMaterialColor.w.coerceIn(MIN_MATERIAL_COLOR_VALUE, MAX_MATERIAL_COLOR_VALUE),
+                        x = newMaterialColor.x.coerceIn(
+                            MIN_MATERIAL_COLOR_VALUE,
+                            MAX_MATERIAL_COLOR_VALUE
+                        ),
+                        y = newMaterialColor.y.coerceIn(
+                            MIN_MATERIAL_COLOR_VALUE,
+                            MAX_MATERIAL_COLOR_VALUE
+                        ),
+                        z = newMaterialColor.z.coerceIn(
+                            MIN_MATERIAL_COLOR_VALUE,
+                            MAX_MATERIAL_COLOR_VALUE
+                        ),
+                        w = newMaterialColor.w.coerceIn(
+                            MIN_MATERIAL_COLOR_VALUE,
+                            MAX_MATERIAL_COLOR_VALUE
+                        ),
                     )
                 )
             )
