@@ -20,8 +20,8 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.xr.runtime.Session
-import androidx.xr.scenecore.ExrImage
 import androidx.xr.scenecore.GltfModel
+import androidx.xr.scenecore.ImageBasedLightingAsset
 import androidx.xr.scenecore.SpatialEnvironment
 import androidx.xr.scenecore.scene
 import kotlinx.coroutines.CoroutineScope
@@ -32,9 +32,9 @@ class EnvironmentController(private val xrSession: Session, private val coroutin
     private val assetCache: HashMap<String, Any> = HashMap()
     private var activeEnvironmentModelName: String? = null
 
-    fun requestHomeSpaceMode() = xrSession.scene.requestHomeSpaceMode()
+    fun requestHomeSpaceMode() = xrSession.scene.requestHomeSpace()
 
-    fun requestFullSpaceMode() = xrSession.scene.requestFullSpaceMode()
+    fun requestFullSpaceMode() = xrSession.scene.requestFullSpace()
 
     fun requestPassthrough() {
         xrSession.scene.spatialEnvironment.preferredPassthroughOpacity = 1f
@@ -50,15 +50,15 @@ class EnvironmentController(private val xrSession: Session, private val coroutin
                 if (activeEnvironmentModelName == null ||
                     activeEnvironmentModelName != environmentModelName
                 ) {
-                    val lightingForSkybox = ExrImage.createFromZip(
-                        xrSession,
-                        Paths.get("environments/green_hills_ibl.zip")
+                    val lightingForSkybox = ImageBasedLightingAsset.createFromZip(
+                        session = xrSession,
+                        path = Paths.get("environments/green_hills_ibl.zip")
                     )
                     val environmentModel = assetCache[environmentModelName] as GltfModel
 
                     SpatialEnvironment.SpatialEnvironmentPreference(
                         geometry = environmentModel,
-                        skybox = lightingForSkybox,
+                        imageBasedLightingAsset = lightingForSkybox,
                     ).let {
                         xrSession.scene.spatialEnvironment.preferredSpatialEnvironment = it
                     }

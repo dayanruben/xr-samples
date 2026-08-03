@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.xr.compose.platform.LocalSession
 import androidx.xr.compose.spatial.PlanarEmbeddedSubspace
+import androidx.xr.compose.subspace.ExperimentalSpatialGltfAnimationApi
 import androidx.xr.compose.subspace.SpatialGltfModel
 import androidx.xr.compose.subspace.SpatialGltfModelAnimation
 import androidx.xr.compose.subspace.SpatialGltfModelSource
@@ -38,10 +39,8 @@ import androidx.xr.compose.unit.Meter
 import androidx.xr.runtime.math.Vector4
 import androidx.xr.scenecore.AlphaMode
 import androidx.xr.scenecore.KhronosPbrMaterial
-import androidx.xr.scenecore.Texture
 import com.example.helloandroidxr.viewmodel.ModelTransform
 import java.nio.file.Paths
-import kotlin.io.path.Path
 
 // Bugdroid glb height in meters
 private const val bugdroidHeight = 2.08f
@@ -49,6 +48,7 @@ private const val bugdroidHeight = 2.08f
 // The desired amount of the available layout height to use for the bugdroid
 private const val fillRatio = 0.5f
 
+@OptIn(ExperimentalSpatialGltfAnimationApi::class)
 @SuppressLint("NewApi", "RestrictedApi")
 @Composable
 fun BugdroidModel(
@@ -84,17 +84,6 @@ fun BugdroidModel(
                 alphaMode = AlphaMode.OPAQUE
             ).also {
                 pbrMaterial = it
-                // Load a texture; using a plain white texture for visibility of the base color factor
-                val texture = Texture.create(
-                    session = xrSession,
-                    path = Path("textures/white.png")
-                )
-
-                // Apply the texture and configure occlusion to define ambient lighting strength.
-                it.setOcclusionTexture(
-                    texture = texture,
-                    strength = modelTransform.materialProperties.ambientOcclusion
-                )
 
                 // Apply the initial material properties. Base Color is RGBA value
                 it.setBaseColorFactor(
@@ -138,8 +127,8 @@ fun BugdroidModel(
         }
 
         // Control the model's animation state based on the animateBugdroid flag.
-        LaunchedEffect(bugdroidModelState.animations) {
-            val animation = bugdroidModelState.animations.find {
+        LaunchedEffect(bugdroidModelState.getAnimations()) {
+            val animation = bugdroidModelState.getAnimations().find {
                 it.name == "Armature|Take 001|BaseLayer"
             }
             if (animateBugdroid) {
