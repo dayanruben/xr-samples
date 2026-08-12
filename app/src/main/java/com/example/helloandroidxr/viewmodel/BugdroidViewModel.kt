@@ -16,20 +16,37 @@
 
 package com.example.helloandroidxr.viewmodel
 
+import android.annotation.SuppressLint
+import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.xr.runtime.Session
+import androidx.xr.runtime.math.Pose
+import androidx.xr.runtime.math.Quaternion
+import androidx.xr.runtime.math.Vector3
+import androidx.xr.runtime.math.Vector4
+import androidx.xr.scenecore.AlphaMode
+import androidx.xr.scenecore.ExperimentalGltfAnimationApi
+import androidx.xr.scenecore.GltfAnimationStartOptions
+import androidx.xr.scenecore.GltfModel
+import androidx.xr.scenecore.GltfModelEntity
+import androidx.xr.scenecore.KhronosPbrMaterial
+import androidx.xr.scenecore.scene
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-private const val DEFAULT_SCALE = 1.0f
+private const val DEFAULT_SCALE = 0.25f
 private const val DEFAULT_X_ROTATION = 0.0f
 private const val DEFAULT_Y_ROTATION = 0.0f
 private const val DEFAULT_Z_ROTATION = 0.0f
 private const val DEFAULT_W_ROTATION = 1.0f
 private const val DEFAULT_X_OFFSET = 0.0f
 private const val DEFAULT_Y_OFFSET = 0.0f
-private const val DEFAULT_Z_OFFSET = 400.0f
+private const val DEFAULT_Z_OFFSET = 0.25f // Start closer to the viewer
 private const val DEFAULT_X_MATERIAL_COLOR = 0.0f
 private const val DEFAULT_Y_MATERIAL_COLOR = 1.0f
 private const val DEFAULT_Z_MATERIAL_COLOR = 0.0f
@@ -47,8 +64,8 @@ const val MIN_Z_ROTATION_VALUE = -50.0f
 const val MAX_Z_ROTATION_VALUE = 50.0f
 const val MIN_W_ROTATION_VALUE = -5.0f
 const val MAX_W_ROTATION_VALUE = 5.0f
-const val MIN_OFFSET_VALUE = -1500.0f
-const val MAX_OFFSET_VALUE = 1500.0f
+const val MIN_OFFSET_VALUE = -1.5f
+const val MAX_OFFSET_VALUE = 1.5f
 const val MIN_MATERIAL_COLOR_VALUE = 0.0f
 const val MAX_MATERIAL_COLOR_VALUE = 1.0f
 const val MIN_MATERIAL_PROP_VALUE = 0.0f
@@ -113,6 +130,103 @@ class BugdroidViewModel : ViewModel() {
 
     // Public immutable state flow for the UI to observe
     val uiState: StateFlow<BugdroidUiState> = _uiState.asStateFlow()
+    private var xrSession: Session? = null
+    private var gltfModel: GltfModel? = null
+    private var gltfEntity: GltfModelEntity? = null
+    private var pbrMaterial: KhronosPbrMaterial? = null
+
+    fun initSession(session: Session) {
+        if (this.xrSession == session) return
+        this.xrSession = session
+
+        /**
+         * This demonstrates working with a 3D model directly with XR SceneCore APIs. We generally
+         * recommend working with Jetpack Compose for XR when possible.
+         * In this case, for example, we could use a SceneCoreEntity to leverage Compose for layout
+         */
+        viewModelScope.launch {
+            try {
+                // Create the model
+                val model = GltfModel.create(
+                    session,
+                    "models/bugdroid_animated_wave.glb".toUri()
+                )
+                gltfModel = model
+
+                // Create the entity from the model
+                val entity = GltfModelEntity.create(
+                    session = session,
+                    model = model,
+                    parent = session.scene.activitySpace
+                )
+                gltfEntity = entity
+
+                // Create the material
+                val material = KhronosPbrMaterial.create(
+                    session = session,
+                    alphaMode = AlphaMode.OPAQUE
+                ).also { pbrMaterial = it }
+
+                val currentTransform = _uiState.value.modelTransform
+                material.setBaseColorFactor(
+                    Vector4(
+                        x = currentTransform.materialColor.x,
+                        y = currentTransform.materialColor.y,
+                        z = currentTransform.materialColor.z,
+                        w = currentTransform.materialColor.w
+                    )
+                )
+                material.setMetallicFactor(currentTransform.materialProperties.metallic)
+                material.setRoughnessFactor(currentTransform.materialProperties.roughness)
+
+                // Apply the material to the correct node in the entity
+                val bugdroidNode = entity.nodes.find { it.name == "Droid_Solo:Bugdroid" }
+                bugdroidNode?.setMaterialOverride(material)
+
+                updateEntityTransform(currentTransform)
+                entity.setEnabled(_uiState.value.showBugdroid)
+
+                updateAnimationState(_uiState.value.animateBugdroid)
+            } catch (e: Exception) {
+                Log.e("BugdroidViewModel", "Failed to load Bugdroid model entity: $e")
+            }
+        }
+    }
+
+    private fun updateEntityTransform(transform: ModelTransform) {
+        val entity = gltfEntity ?: return
+        entity.setScale(transform.scale)
+        entity.setPose(
+            Pose(
+                translation = Vector3(
+                    x = transform.offset.x,
+                    y = transform.offset.y,
+                    z = transform.offset.z
+                ),
+                rotation = Quaternion(
+                    x = transform.rotation.x,
+                    y = transform.rotation.y,
+                    z = transform.rotation.z,
+                    w = transform.rotation.w
+                )
+            )
+        )
+    }
+
+    @OptIn(ExperimentalGltfAnimationApi::class)
+    @SuppressLint("NewApi")
+    private fun updateAnimationState(animate: Boolean) {
+        val entity = gltfEntity ?: return
+        val animation = entity.getAnimations().find {
+            it.name == "Armature|Take 001|BaseLayer"
+        } ?: return
+
+        if (animate) {
+            animation.start(GltfAnimationStartOptions(shouldLoop = true))
+        } else {
+            animation.stop()
+        }
+    }
 
     fun updateShownSliderGroup(group: SliderGroup) {
         _uiState.update { currentState ->
@@ -122,111 +236,146 @@ class BugdroidViewModel : ViewModel() {
 
     fun updateShowBugdroid() {
         _uiState.update { currentState ->
-            currentState.copy(showBugdroid = !currentState.showBugdroid)
+            val nextState = !currentState.showBugdroid
+            gltfEntity?.setEnabled(nextState)
+            currentState.copy(showBugdroid = nextState)
         }
     }
 
     fun updateAnimateBugdroid() {
         _uiState.update { currentState ->
-            currentState.copy(animateBugdroid = !currentState.animateBugdroid)
+            val nextState = !currentState.animateBugdroid
+            updateAnimationState(nextState)
+            currentState.copy(animateBugdroid = nextState)
         }
     }
 
     fun updateScale(newScale: Float) {
         _uiState.update { currentState ->
-            currentState.copy(
-                modelTransform = currentState.modelTransform.copy(
-                    scale = newScale.coerceIn(MIN_SCALE_VALUE, MAX_SCALE_VALUE)
-                )
+            val updatedTransform = currentState.modelTransform.copy(
+                scale = newScale.coerceIn(MIN_SCALE_VALUE, MAX_SCALE_VALUE)
             )
+            updateEntityTransform(updatedTransform)
+            currentState.copy(modelTransform = updatedTransform)
         }
     }
 
     fun updateRotation(newRotation: ModelRotation) {
         _uiState.update { currentState ->
-            currentState.copy(
-                modelTransform = currentState.modelTransform.copy(
-                    rotation = newRotation.copy(
-                        x = newRotation.x.coerceIn(MIN_X_ROTATION_VALUE, MAX_X_ROTATION_VALUE),
-                        y = newRotation.y.coerceIn(MIN_Y_ROTATION_VALUE, MAX_Y_ROTATION_VALUE),
-                        z = newRotation.z.coerceIn(MIN_Z_ROTATION_VALUE, MAX_Z_ROTATION_VALUE),
-                        w = newRotation.w.coerceIn(MIN_X_ROTATION_VALUE, MAX_W_ROTATION_VALUE)
-                    )
-                )
+            val updatedRotation = newRotation.copy(
+                x = newRotation.x.coerceIn(MIN_X_ROTATION_VALUE, MAX_X_ROTATION_VALUE),
+                y = newRotation.y.coerceIn(MIN_Y_ROTATION_VALUE, MAX_Y_ROTATION_VALUE),
+                z = newRotation.z.coerceIn(MIN_Z_ROTATION_VALUE, MAX_Z_ROTATION_VALUE),
+                w = newRotation.w.coerceIn(MIN_X_ROTATION_VALUE, MAX_W_ROTATION_VALUE)
             )
+            val updatedTransform = currentState.modelTransform.copy(rotation = updatedRotation)
+            updateEntityTransform(updatedTransform)
+            currentState.copy(modelTransform = updatedTransform)
         }
     }
 
     fun updateOffset(newOffset: ModelOffset) {
         _uiState.update { currentState ->
-            currentState.copy(
-                modelTransform = currentState.modelTransform.copy(
-                    offset = currentState.modelTransform.offset.copy(
-                        x = newOffset.x.coerceIn(MIN_OFFSET_VALUE, MAX_OFFSET_VALUE),
-                        y = newOffset.y.coerceIn(MIN_OFFSET_VALUE, MAX_OFFSET_VALUE),
-                        z = newOffset.z.coerceIn(MIN_OFFSET_VALUE, MAX_OFFSET_VALUE),
-                    )
-                )
+            val updatedOffset = currentState.modelTransform.offset.copy(
+                x = newOffset.x.coerceIn(MIN_OFFSET_VALUE, MAX_OFFSET_VALUE),
+                y = newOffset.y.coerceIn(MIN_OFFSET_VALUE, MAX_OFFSET_VALUE),
+                z = newOffset.z.coerceIn(MIN_OFFSET_VALUE, MAX_OFFSET_VALUE),
             )
+            val updatedTransform = currentState.modelTransform.copy(offset = updatedOffset)
+            updateEntityTransform(updatedTransform)
+            currentState.copy(modelTransform = updatedTransform)
         }
     }
 
     fun updateMaterialColor(newMaterialColor: ModelMaterialColor) {
         _uiState.update { currentState ->
-            currentState.copy(
-                modelTransform = currentState.modelTransform.copy(
-                    materialColor = currentState.modelTransform.materialColor.copy(
-                        x = newMaterialColor.x.coerceIn(
-                            MIN_MATERIAL_COLOR_VALUE,
-                            MAX_MATERIAL_COLOR_VALUE
-                        ),
-                        y = newMaterialColor.y.coerceIn(
-                            MIN_MATERIAL_COLOR_VALUE,
-                            MAX_MATERIAL_COLOR_VALUE
-                        ),
-                        z = newMaterialColor.z.coerceIn(
-                            MIN_MATERIAL_COLOR_VALUE,
-                            MAX_MATERIAL_COLOR_VALUE
-                        ),
-                        w = newMaterialColor.w.coerceIn(
-                            MIN_MATERIAL_COLOR_VALUE,
-                            MAX_MATERIAL_COLOR_VALUE
-                        ),
-                    )
+            val updatedColor = currentState.modelTransform.materialColor.copy(
+                x = newMaterialColor.x.coerceIn(
+                    MIN_MATERIAL_COLOR_VALUE,
+                    MAX_MATERIAL_COLOR_VALUE
+                ),
+                y = newMaterialColor.y.coerceIn(
+                    MIN_MATERIAL_COLOR_VALUE,
+                    MAX_MATERIAL_COLOR_VALUE
+                ),
+                z = newMaterialColor.z.coerceIn(
+                    MIN_MATERIAL_COLOR_VALUE,
+                    MAX_MATERIAL_COLOR_VALUE
+                ),
+                w = newMaterialColor.w.coerceIn(
+                    MIN_MATERIAL_COLOR_VALUE,
+                    MAX_MATERIAL_COLOR_VALUE
+                ),
+            )
+            val updatedTransform = currentState.modelTransform.copy(materialColor = updatedColor)
+            pbrMaterial?.setBaseColorFactor(
+                Vector4(
+                    x = updatedColor.x,
+                    y = updatedColor.y,
+                    z = updatedColor.z,
+                    w = updatedColor.w
                 )
             )
+            currentState.copy(modelTransform = updatedTransform)
         }
     }
 
     fun updateMaterialProperties(newMaterialProperties: ModelMaterialProperties) {
         _uiState.update { currentState ->
-            currentState.copy(
-                modelTransform = currentState.modelTransform.copy(
-                    materialProperties = currentState.modelTransform.materialProperties.copy(
-                        ambientOcclusion = newMaterialProperties.ambientOcclusion.coerceIn(
-                            MIN_MATERIAL_PROP_VALUE,
-                            MAX_MATERIAL_PROP_VALUE
-                        ),
-                        metallic = newMaterialProperties.metallic.coerceIn(
-                            MIN_MATERIAL_PROP_VALUE,
-                            MAX_MATERIAL_PROP_VALUE
-                        ),
-                        roughness = newMaterialProperties.roughness.coerceIn(
-                            MIN_MATERIAL_PROP_VALUE,
-                            MAX_MATERIAL_PROP_VALUE
-                        ),
-                    )
-                )
+            val updatedProperties = currentState.modelTransform.materialProperties.copy(
+                ambientOcclusion = newMaterialProperties.ambientOcclusion.coerceIn(
+                    MIN_MATERIAL_PROP_VALUE,
+                    MAX_MATERIAL_PROP_VALUE
+                ),
+                metallic = newMaterialProperties.metallic.coerceIn(
+                    MIN_MATERIAL_PROP_VALUE,
+                    MAX_MATERIAL_PROP_VALUE
+                ),
+                roughness = newMaterialProperties.roughness.coerceIn(
+                    MIN_MATERIAL_PROP_VALUE,
+                    MAX_MATERIAL_PROP_VALUE
+                ),
             )
+            val updatedTransform =
+                currentState.modelTransform.copy(materialProperties = updatedProperties)
+            pbrMaterial?.setMetallicFactor(updatedProperties.metallic)
+            pbrMaterial?.setRoughnessFactor(updatedProperties.roughness)
+            currentState.copy(modelTransform = updatedTransform)
         }
     }
 
     fun resetModel() {
         _uiState.update { currentState ->
+            val resetTransform = ModelTransform()
+            updateEntityTransform(resetTransform)
+            pbrMaterial?.let { material ->
+                material.setBaseColorFactor(
+                    Vector4(
+                        x = resetTransform.materialColor.x,
+                        y = resetTransform.materialColor.y,
+                        z = resetTransform.materialColor.z,
+                        w = resetTransform.materialColor.w
+                    )
+                )
+                material.setMetallicFactor(resetTransform.materialProperties.metallic)
+                material.setRoughnessFactor(resetTransform.materialProperties.roughness)
+            }
+            updateAnimationState(false)
             currentState.copy(
-                modelTransform = ModelTransform(),
+                modelTransform = resetTransform,
                 animateBugdroid = false
             )
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        gltfEntity?.parent = null
+        gltfEntity = null
+        gltfModel?.close()
+        gltfModel = null
+        pbrMaterial?.close()
+        pbrMaterial = null
+        xrSession = null
     }
 }

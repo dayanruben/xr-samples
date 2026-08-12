@@ -55,8 +55,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
+import androidx.xr.compose.platform.LocalSession
 import androidx.xr.compose.platform.LocalSpatialCapabilities
-import androidx.xr.compose.platform.LocalSpatialConfiguration
 import androidx.xr.compose.spatial.ContentEdge
 import androidx.xr.compose.spatial.Orbiter
 import androidx.xr.compose.spatial.Subspace
@@ -69,16 +69,12 @@ import androidx.xr.compose.subspace.layout.fillMaxSize
 import androidx.xr.compose.subspace.layout.fillMaxWidth
 import androidx.xr.compose.subspace.layout.height
 import androidx.xr.compose.subspace.layout.movable
-import androidx.xr.compose.subspace.layout.offset
 import androidx.xr.compose.subspace.layout.padding
 import androidx.xr.compose.subspace.layout.resizable
-import androidx.xr.compose.subspace.layout.rotate
 import androidx.xr.compose.subspace.layout.size
 import androidx.xr.compose.subspace.layout.width
-import androidx.xr.runtime.math.Quaternion
 import com.example.helloandroidxr.R
 import com.example.helloandroidxr.ui.components.BugdroidControls
-import com.example.helloandroidxr.ui.components.BugdroidModel
 import com.example.helloandroidxr.ui.components.BugdroidSliderControls
 import com.example.helloandroidxr.ui.components.EnvironmentControls
 import com.example.helloandroidxr.ui.components.SearchBar
@@ -95,7 +91,14 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun HelloAndroidXRApp() {
-    val viewModel = BugdroidViewModel()
+    val viewModel = remember { BugdroidViewModel() }
+    val session = LocalSession.current
+    LaunchedEffect(session) {
+        if (session != null) {
+            viewModel.initSession(session)
+        }
+    }
+
     val uiState by viewModel.uiState.collectAsState()
     if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
         SpatialLayout(
@@ -344,7 +347,6 @@ private fun PrimaryContent(
             if (uiState.showBugdroid) R.string.hide_bugdroid else R.string.show_bugdroid
         val animateStringResId =
             if (uiState.animateBugdroid) R.string.stop_animation_bugdroid else R.string.animate_bugdroid
-        val modelTransform = uiState.modelTransform
         Surface(modifier.fillMaxSize()) {
             Column(modifier.padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(modifier.padding(48.dp), contentAlignment = Alignment.Center) {
@@ -371,26 +373,6 @@ private fun PrimaryContent(
                         }
                     }
                 }
-                BugdroidModel(
-                    modelTransform = modelTransform,
-                    showBugdroid = uiState.showBugdroid,
-                    animateBugdroid = uiState.animateBugdroid,
-                    modifier = SubspaceModifier
-                        .fillMaxSize()
-                        .rotate(
-                            Quaternion(
-                                x = modelTransform.rotation.x,
-                                y = modelTransform.rotation.y,
-                                z = modelTransform.rotation.z,
-                                w = modelTransform.rotation.w
-                            )
-                        )
-                        .offset(
-                            x = modelTransform.offset.x.dp,
-                            y = modelTransform.offset.y.dp,
-                            z = modelTransform.offset.z.dp // Relative position from the panel
-                        )
-                )
             }
         }
     } else {
@@ -408,7 +390,7 @@ private fun BlockOfContentOne(
     onSliderGroupSelected: (SliderGroup) -> Unit,
     onResetModel: () -> Unit
 ) {
-    if (LocalSpatialConfiguration.current.hasXrSpatialFeature && showBugdroid) {
+    if (LocalSpatialCapabilities.current.isContent3dEnabled && showBugdroid) {
         BugdroidControls(
             onSliderGroupSelected = onSliderGroupSelected,
             onResetModel = {
@@ -433,7 +415,7 @@ private fun BlockOfContentTwo(
     onMaterialColorChange: (ModelMaterialColor) -> Unit,
     onMaterialPropertiesChange: (ModelMaterialProperties) -> Unit,
 ) {
-    if (LocalSpatialConfiguration.current.hasXrSpatialFeature && showBugdroid) {
+    if (LocalSpatialCapabilities.current.isContent3dEnabled && showBugdroid) {
         BugdroidSliderControls(
             visibleSliderGroup = uiState.visibleSliderGroup,
             modelTransform = uiState.modelTransform,
